@@ -19,16 +19,13 @@ pipeline {
         string(name: 'version', description: 'Release Folder Name. Version is set in the VERSION file of the repository.')
         string(name: 'bucket', defaultValue: "internal-builds.cloudbolt.io", description: 'Bucket for uploading release artifacts.')
         string(name: 'bucket_root_path', defaultValue: '/OneFuse/Terraform/', description: 'Root path in bucket. "/" is main bucket as root.')
-        string(name: 'release_date', description: 'Release date of artifact.')
+        string(name: 'release_date', defaultValue: 'YYYY-MM-dd' description: 'Release date of artifact.')
     }
     environment {
       VERSION = sh(
           script: "cat VERSION",
           returnStdout: true,
       ).trim()
-      TAG = sh(returnStdout: true, script: "git tag --contains | head -1").trim()
-      VERSION_NAME = params.version != null ? params.version : "${env.TAG}"
-      RELEASE_DATE = params.release_date != null ? params.release_date : new Date().format('YYYY-MM-dd')
       OUTPUT_BASEDIR = "release"
       OUTPUT_DIR = "${env.OUTPUT_BASEDIR}/terraform-provider-onefuse"
       TERRAFORM_PROVIDER_BIN_NAME = "terraform-provider-onefuse_v${env.VERSION}"
@@ -71,7 +68,7 @@ pipeline {
                     writeFile(
                         file: "${env.OUTPUT_DIR}/info.json",
                         text: sh(
-                            script: "./scripts/create_info.sh ${env.VERSION} ${env.CB_BUILD} ${env.RELEASE_DATE} ${TERRAFORM_PROVIDER_BIN_FILE_PATH} ${env.SHA_256_CHECKSUM_LINUX} ${env.SHA_256_CHECKSUM_DARWIN} ${env.SHA_256_CHECKSUM_WINDOWS}",
+                            script: "./scripts/create_info.sh ${env.VERSION} ${env.CB_BUILD} ${params.release_date} ${TERRAFORM_PROVIDER_BIN_FILE_PATH} ${env.SHA_256_CHECKSUM_LINUX} ${env.SHA_256_CHECKSUM_DARWIN} ${env.SHA_256_CHECKSUM_WINDOWS}",
                             returnStdout: true,
                         ).trim(),
                     )
@@ -81,7 +78,11 @@ pipeline {
         stage("Upload release artifacts to S3") {
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'AWS Jenkins User', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
-                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${env.VERSION_NAME} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
+		    script: {
+			def tag = sh(returnStdout: true, script: "git tag --contains | head -1").trim()
+			def version = params.version == null ? tag : params.version
+		    }
+                    sh script: "aws s3 sync ${env.OUTPUT_DIR} s3://${params.bucket}${params.bucket_root_path}${version} --exclude=* --include=linux/*${env.VERSION}* --include=darwin/*${env.VERSION}* --include=windows/*${env.VERSION}* --include=info.json"
                 }
             }
         }
