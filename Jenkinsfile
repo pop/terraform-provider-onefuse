@@ -16,10 +16,12 @@ pipeline {
       node { label 'go' }
     }
     parameters {
-        string(name: 'version', defaultValue: 'X.Y.Z', description: 'Release Folder Name. Version is set in the VERSION file of the repository.')
-        string(name: 'bucket', defaultValue: 'cb-internal-builds', description: 'Bucket for uploading release artifacts.')
+        def tag = sh(returnStdout: true, script: "git tag --contains | head -1").trim()
+	def today = new Date().format( 'YYYY-MM-dd' )
+        string(name: 'version', defaultValue: "${tag}", description: 'Release Folder Name. Version is set in the VERSION file of the repository.')
+        string(name: 'bucket', defaultValue: "internal-builds.cloudbolt.io", description: 'Bucket for uploading release artifacts.')
         string(name: 'bucket_root_path', defaultValue: '/OneFuse/Terraform/', description: 'Root path in bucket. "/" is main bucket as root.')
-        string(name: 'release_date', defaultValue: 'YYYY-MM-DD', description: 'Release date of artifact.')
+        string(name: 'release_date', defaultValue: "${today}", description: 'Release date of artifact.')
     }
     environment {
       VERSION = sh(
