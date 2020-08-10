@@ -170,50 +170,50 @@ func (apiClient *OneFuseAPIClient) DeleteCustomName(id int) error {
 	return checkForErrors(res)
 }
 
-func (apiClient *OneFuseAPIClient) CreateMicrosoftEndpoint(newEndpoint MicrosoftEndpoint) (endpoint MicrosoftEndpoint, err error) {
-	endpoint := MicrosoftEndpoint
+func (apiClient *OneFuseAPIClient) CreateMicrosoftEndpoint(newEndpoint MicrosoftEndpoint) (MicrosoftEndpoint, error) {
+	endpoint := MicrosoftEndpoint{}
 	err := errors.New("Not implemented yet")
-	return
+	return endpoint, err
 }
 
-func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (endpoint MicrosoftEndpoint, err error) {
-	endpoint := MicrosoftEndpoint
+func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (MicrosoftEndpoint, error) {
+	endpoint := MicrosoftEndpoint{}
 	err := errors.New("Not implemented yet")
-	return
+	return endpoint, err
 }
 
-func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (endpoint MicrosoftEndpoint, err error) {
-	endpoint := MicrosoftEndpoint
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (MicrosoftEndpoint, error) {
+	endpoint := MicrosoftEndpoint{}
 	err := errors.New("Not implemented yet")
-	return
+	return endpoint, err
 }
 
 func (apiClient *OneFuseAPIClient) DeleteMicrosoftEndpoint(id int) error {
 	return errors.New("Not implemented yet")
 }
 
-func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAdPolicy) (policy MicrosoftAdPolicy, err error) {
-	policy := MicrosoftAdPolicy
+func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAdPolicy) (MicrosoftAdPolicy, error) {
+	policy := MicrosoftAdPolicy{}
 	err := errors.New("Not implemented yet")
-	return
+	return policy, err
 }
 
-func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (policy MicrosoftAdPolicy, err error) {
-	policy := MicrosoftAdPolicy
+func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (MicrosoftAdPolicy, error) {
+	policy := MicrosoftAdPolicy{}
 	err := errors.New("Not implemented yet")
-	return
+	return policy, err
 }
 
-func (apiClient *OneFuseAPIClient) UpdateMicrosoftAdPolicy(id int, updatedPolicy MicrosoftAdPolicy) (policy MicrosoftAdPolicy, err error) {
-	policy := MicrosoftAdPolicy
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftAdPolicy(id int, updatedPolicy MicrosoftAdPolicy) (MicrosoftAdPolicy, error) {
+	policy := MicrosoftAdPolicy{}
 	err := errors.New("Not implemented yet")
-	return
+	return policy, err
 }
 
-func (apiClient *OneFuseAPIClient) DeleteMicrosoftAdPolicy(id int) (policy MicrosoftAdPolicy, err error) {
-	policy := MicrosoftAdPolicy
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftAdPolicy(id int) (MicrosoftAdPolicy, error) {
+	policy := MicrosoftAdPolicy{}
 	err := errors.New("Not implemented yet")
-	return
+	return policy, err
 }
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {

@@ -7,8 +7,7 @@
 package onefuse
 
 import (
-	"errors" // DELETE ME once func's are implemented
-	"log"
+	// "log" // TODO: Un-comment when data source implemented
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
