@@ -43,6 +43,16 @@ type WorkspacesListResponse struct {
 	} `json:"_embedded"`
 }
 
+type MicrosoftEndpoint struct {
+	Id int
+	// TODO: Fill this out
+}
+
+type MicrosoftAdPolicy struct {
+	Id int
+	// TODO: Fill this out
+}
+
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
 	return &OneFuseAPIClient{
 		config: c,
@@ -158,6 +168,52 @@ func (apiClient *OneFuseAPIClient) DeleteCustomName(id int) error {
 		return err
 	}
 	return checkForErrors(res)
+}
+
+func (apiClient *OneFuseAPIClient) CreateMicrosoftEndpoint(newEndpoint MicrosoftEndpoint) (endpoint MicrosoftEndpoint, err error) {
+	endpoint := MicrosoftEndpoint
+	err := errors.New("Not implemented yet")
+	return
+}
+
+func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (endpoint MicrosoftEndpoint, err error) {
+	endpoint := MicrosoftEndpoint
+	err := errors.New("Not implemented yet")
+	return
+}
+
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (endpoint MicrosoftEndpoint, err error) {
+	endpoint := MicrosoftEndpoint
+	err := errors.New("Not implemented yet")
+	return
+}
+
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftEndpoint(id int) error {
+	return errors.New("Not implemented yet")
+}
+
+func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAdPolicy) (policy MicrosoftAdPolicy, err error) {
+	policy := MicrosoftAdPolicy
+	err := errors.New("Not implemented yet")
+	return
+}
+
+func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (policy MicrosoftAdPolicy, err error) {
+	policy := MicrosoftAdPolicy
+	err := errors.New("Not implemented yet")
+	return
+}
+
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftAdPolicy(id int, updatedPolicy MicrosoftAdPolicy) (policy MicrosoftAdPolicy, err error) {
+	policy := MicrosoftAdPolicy
+	err := errors.New("Not implemented yet")
+	return
+}
+
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftAdPolicy(id int) (policy MicrosoftAdPolicy, err error) {
+	policy := MicrosoftAdPolicy
+	err := errors.New("Not implemented yet")
+	return
 }
 
 func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {

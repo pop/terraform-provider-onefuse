@@ -46,7 +46,11 @@ func Provider() *schema.Provider {
 			},
 		},
 		ResourcesMap: map[string]*schema.Resource{
-			"onefuse_naming": resourceCustomNaming(),
+			"onefuse_naming":              resourceCustomNaming(),
+			"onefuse_microsoft_ad_policy": resourceMicrosoftAdPolicy(),
+		},
+		DataSourcesMap: map[string]*schema.Resource{
+			"onefuse_microsoft_endpoint": dataSourceMicrosoftEndpoint(),
 		},
 		ConfigureFunc: configureProvider,
 	}
