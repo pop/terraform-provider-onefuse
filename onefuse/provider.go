@@ -75,3 +75,14 @@ func configureProvider(d *schema.ResourceData) (interface{}, error) {
 		verifySSL: d.Get("verify_ssl").(bool),
 	}, nil
 }
+
+func NewConfig(scheme string, address string, port string, user string, password string, verifySSL bool) *Config {
+	return &Config{
+		scheme:    scheme,
+		address:   address,
+		port:      port,
+		user:      user,
+		password:  password,
+		verifySSL: verifySSL,
+	}
+}
