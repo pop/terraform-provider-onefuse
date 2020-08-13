@@ -70,7 +70,6 @@ func resourceCustomNameCreate(d *schema.ResourceData, m interface{}) error {
 }
 
 func bindResource(d *schema.ResourceData, cn CustomName) error {
-
 	// setting the ID is REALLY necessary here
 	// we use the FQDN instead of the numeric ID as it is more likely to remain consistent as a composite key in TF
 	d.SetId(cn.Name + "." + cn.DnsSuffix)

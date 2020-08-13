@@ -9,8 +9,10 @@ package onefuse
 import (
 	// "log" // TODO: Un-comment when data source implemented
 
+	"fmt"
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
+	"log"
 )
 
 func resourceMicrosoftAdPolicy() *schema.Resource {
@@ -55,8 +57,58 @@ func resourceMicrosoftAdPolicy() *schema.Resource {
 	}
 }
 
+func bindMicrosoftADPolicyResource(d *schema.ResourceData, policy *MicrosoftAdPolicy) error {
+	d.SetId(fmt.Sprintf("%v", policy.ID))
+
+	if err := d.Set("policy_id", policy.Id); err != nil {
+		return errors.WithMessage(err, "cannot set policy_id")
+	}
+	if err := d.Set("name", policy.Name); err != nil {
+		return errors.WithMessage(err, "cannot set name")
+	}
+	if err := d.Set("description", policy.Description); err != nil {
+		return errors.WithMessage(err, "cannot set description")
+	}
+	if err := d.Set("workspace", policy.Links.Workspace); err != nil {
+		return errors.WithMessage(err, "cannot set workspace")
+	}
+	if err := d.Set("microsoft_endpoint", policy.Links.MicrosoftEndpoint); err != nil {
+		return errors.WithMessage(err, "cannot set microsoft_endpoint")
+	}
+
+	// TODO: set OU and letter_case, too.
+
+	return nil
+}
+
 func resourceMicrosoftAdPolicyCreate(d *schema.ResourceData, m interface{}) error {
-	return errors.New("Not implemented yet")
+	log.Println("calling resourceMicrosoftAdPolicyCreate")
+
+	// TODO: parse out the id and/or name from workspaceUrl
+	//  and will have to update when OneFuse supports multiple workspaces.
+	workspaceUrl := d.Get("workspace").(string)
+	workspace := Workspace{
+		Name: workspaceUrl,
+		ID: workspaceUrl,
+	}
+	workspaces := make([]Workspace, 1).append(workspace)
+
+	newPolicy := MicrosoftAdPolicy{
+		Name: d.Get("name").(string),
+		Description: d.Get("description").(string),
+		OU: d.Get("ou").(string),
+		MicrosoftEndpoint: d.Get("microsoftEndpointId").(string),
+		ComputerNameLetterCase: d.Get("computerNameLetterCase").(string),
+		Embedded: workspaces,
+	}
+
+	config := m.(Config)
+	policy, err := config.NewOneFuseApiClient().CreateMicrosoftAdPolicy(newPolicy)
+	if err != nil {
+		return err
+	}
+	err = bindMicrosoftADPolicyResource(d, &policy)
+	return err
 }
 
 func resourceMicrosoftAdPolicyRead(d *schema.ResourceData, m interface{}) error {

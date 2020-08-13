@@ -28,6 +28,11 @@ type OneFuseAPIClient struct {
 	config *Config
 }
 
+type Workspace struct {
+	Name string `json:"name"`
+	ID 	 string `json:"id"`
+}
+
 type CustomName struct {
 	Id        int
 	Version   int
@@ -37,20 +42,14 @@ type CustomName struct {
 
 type WorkspacesListResponse struct {
 	Embedded struct {
-		Workspaces []struct {
-			Name string `json:"name"`
-			ID   int    `json:"id"`
-		} `json:"workspaces`
+		Workspaces []Workspace `json:"workspaces"`
 	} `json:"_embedded"`
 }
 
 type MicrosoftEndpoint struct {
-	Embedded struct {
-		Workspaces []struct {
-			Name string `json:"name"`
-			ID   int    `json:"id"`
-		} `json:"workspaces`
-	} `json:"_embedded"`
+	Links struct {
+		Workspace `json:"workspace"`
+	} `json:"_links"`
 	ID               int    `json:"id"`
 	Name             string `json:"name"`
 	Description      string `json:"string"`
@@ -61,12 +60,15 @@ type MicrosoftEndpoint struct {
 }
 
 type MicrosoftAdPolicy struct {
-	Embedded struct {
-		Workspaces []struct {
-			Name string `json:"name"`
-			ID   int    `json:"id"`
-		} `json:"workspaces`
-	} `json:"_embedded"`
+	Links struct {
+		// TODO: just model what we get; use the workspace URL.
+		Workspace `json:"workspace"`
+		MicrosoftEndpoint struct {
+			// TODO Update
+			Name string
+			URL  string
+		}
+	} `json:"_links"`
 	Name                   string `json:"name"`
 	ID                     int    `json:"id"`
 	Description            string `json:"description"`
@@ -217,8 +219,58 @@ func (apiClient *OneFuseAPIClient) DeleteMicrosoftEndpoint(id int) error {
 
 func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAdPolicy) (MicrosoftAdPolicy, error) {
 	policy := MicrosoftAdPolicy{}
-	err := errors.New("Not implemented yet")
-	return policy, err
+	config := apiClient.config
+
+	// Construct a URL we are going to POST to
+	// /api/v3/onefuse/microsoftADPolicies/
+	url := itemURL(config, MicrosoftAdPolicyResourceType, id)
+
+	var jsonBytes []byte
+	jsonBytes, err = json.Marshal(newPolicy)
+	requestBody := string(jsonBytes)
+	if err != nil {
+		err = errors.New("unable to marshal request body to JSON")
+		return policy, err
+	}
+	payload := strings.NewReader(requestBody)
+
+	// Create the DELETE request
+	req, _ := http.NewRequest("POST", url, payload)
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+	// Make the delete request
+	res, err := client.Do(req)
+
+	// Return err if it went poorly
+	if err != nil {
+		return policy, err
+	}
+
+	err = checkForErrors(res)
+	if err != nil {
+		return policy, err
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return policy, err
+	}
+
+	err = res.Body.Close()
+	if err != nil {
+		return policy, err
+	}
+
+	err = json.Unmarshal(body, &policy)
+	if err != nil {
+		return policy, err
+	}
+	log.Println(policy)
+
+	return policy, nil
 }
 
 func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (MicrosoftAdPolicy, error) {
