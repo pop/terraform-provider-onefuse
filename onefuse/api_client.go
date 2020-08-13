@@ -22,16 +22,11 @@ const ApiVersion = "/api/v3/"
 const ApiNamespace = "onefuse"
 const NamingResourceType = "customNames"
 const WorkspaceResourceType = "workspaces"
-const MicrosoftAdPolicyResourceType = "microsoftActiveDirectoryPolicies"
+const MicrosoftADPolicyResourceType = "microsoftADPolicies"
 const ModuleEndpointResourceType = "endpoints"
 
 type OneFuseAPIClient struct {
 	config *Config
-}
-
-type Workspace struct {
-	Name string `json:"name"`
-	ID   string `json:"id"`
 }
 
 type CustomName struct {
@@ -41,6 +36,19 @@ type CustomName struct {
 	DnsSuffix string
 }
 
+type LinkRef struct {
+	Href string `json:"href,omitempty"`
+	Title string `json:"href,omitempty"`
+}
+
+type Workspace struct {
+	Links *struct {
+		Self LinkRef `json:"self,omitempty"`
+	} `json:"_links,omitempty"`
+	ID int `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
+}
+
 type WorkspacesListResponse struct {
 	Embedded struct {
 		Workspaces []Workspace `json:"workspaces"`
@@ -48,34 +56,35 @@ type WorkspacesListResponse struct {
 }
 
 type MicrosoftEndpoint struct {
-	Links struct {
-		Workspace `json:"workspace"`
-	} `json:"_links"`
-	ID               int    `json:"id"`
-	Name             string `json:"name"`
-	Description      string `json:"string"`
-	Host             string `json:"host"`
-	Port             int    `json:"port"`
-	SSL              bool   `json:"ssl"`
-	MicrosoftVersion int    `json:"microsoftVersion"`
+	Links *struct {
+		Self LinkRef `json:"self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+		Credential LinkRef `json:"credential,omitempty"`
+	} `json:"_links,omitempty"`
+	ID               int    `json:"id,omitempty"`
+	Type			 string `json:"type,omitempty"`
+	Name             string `json:"name,omitempty"`
+	Description      string `json:"string,omitempty"`
+	Host             string `json:"host,omitempty"`
+	Port             int    `json:"port,omitempty"`
+	SSL              bool   `json:"ssl,omitempty"`
+	MicrosoftVersion int    `json:"microsoftVersion,omitempty"`
 }
 
-type MicrosoftAdPolicy struct {
-	Links struct {
-		// TODO: just model what we get; use the workspace URL.
-		Workspace         `json:"workspace"`
-		MicrosoftEndpoint struct {
-			// TODO Update
-			Name string
-			URL  string
-		}
-	} `json:"_links"`
-	Name                   string `json:"name"`
-	ID                     int    `json:"id"`
-	Description            string `json:"description"`
-	MicrosoftEndpoint      string `json:"microsoftEndpoint"`
-	ComputerNameLetterCase string `json:"computerNameLetterCase"`
-	OU                     string `json:"ou"`
+type MicrosoftADPolicy struct {
+	Links *struct {
+		Self LinkRef `json:self,omitempty"`
+		Workspace LinkRef `json:"workspace,omitempty"`
+		MicrosoftEndpoint LinkRef `json:"microsoftEndpoint,omitempty"`
+	} `json:"_links,omitempty"`
+	Name                   string   `json:"name,omitempty"`
+	ID                     int      `json:"id,omitempty"`
+	Description            string   `json:"description,omitempty"`
+	MicrosoftEndpointID    int      `json:"microsoftEndpointId,omitempty"`
+	MicrosoftEndpoint      string   `json:"microsoftEndpoint,omitempty"`
+	ComputerNameLetterCase string   `json:"computerNameLetterCase,omitempty"`
+	WorkspaceURL           string   `json:"workspace,omitempty"`
+	OU                     string   `json:"ou,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -84,8 +93,15 @@ func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
 	}
 }
 
-func (apiClient *OneFuseAPIClient) GenerateCustomName(dnsSuffix string, namingPolicyID string, workspaceID string,
-	templateProperties map[string]interface{}) (result *CustomName, err error) {
+func (apiClient *OneFuseAPIClient) GenerateCustomName(
+	dnsSuffix string,
+	namingPolicyID string,
+	workspaceID string,
+	templateProperties map[string]interface{},
+) (
+	result *CustomName,
+	err error,
+) {
 
 	config := apiClient.config
 	url := collectionURL(config, NamingResourceType)
@@ -153,7 +169,6 @@ func (apiClient *OneFuseAPIClient) GenerateCustomName(dnsSuffix string, namingPo
 		"custom_name_id=" + strconv.Itoa(result.Id) +
 		" name=" + result.Name +
 		" dnsSuffix=" + result.DnsSuffix)
-	fmt.Printf("Complete!")
 	return
 }
 
@@ -214,7 +229,6 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (Micr
 	url := collectionURL(config, ModuleEndpointResourceType)
 	url += fmt.Sprintf("?filter=name:%s;type:microsoft", name)
 
-	fmt.Print(url)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return endpoint, err
@@ -243,6 +257,7 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (Micr
 func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (MicrosoftEndpoint, error) {
 	endpoint := MicrosoftEndpoint{}
 	err := errors.New("Not implemented yet")
+
 	return endpoint, err
 }
 
@@ -250,13 +265,17 @@ func (apiClient *OneFuseAPIClient) DeleteMicrosoftEndpoint(id int) error {
 	return errors.New("Not implemented yet")
 }
 
-func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAdPolicy) (MicrosoftAdPolicy, error) {
-	policy := MicrosoftAdPolicy{}
+func (apiClient *OneFuseAPIClient) CreateMicrosoftADPolicy(newPolicy *MicrosoftADPolicy) (MicrosoftADPolicy, error) {
+	policy := MicrosoftADPolicy{}
 	config := apiClient.config
+
+	if newPolicy.Name == "" || newPolicy.WorkspaceURL == "" || newPolicy.MicrosoftEndpointID == 0 {
+		return policy, errors.New("Microsoft AD Policy Updates Require a Name and, MicrosoftEndpointID, WorkspaceURL")
+	}
 
 	// Construct a URL we are going to POST to
 	// /api/v3/onefuse/microsoftADPolicies/
-	url := collectionURL(config, MicrosoftAdPolicyResourceType)
+	url := collectionURL(config, MicrosoftADPolicyResourceType)
 
 	var jsonBytes []byte
 	jsonBytes, err := json.Marshal(newPolicy)
@@ -306,10 +325,10 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAd
 	return policy, nil
 }
 
-func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (MicrosoftAdPolicy, error) {
-	policy := MicrosoftAdPolicy{}
+func (apiClient *OneFuseAPIClient) GetMicrosoftADPolicy(id int) (MicrosoftADPolicy, error) {
+	policy := MicrosoftADPolicy{}
 	config := apiClient.config
-	url := itemURL(config, MicrosoftAdPolicyResourceType, id)
+	url := itemURL(config, MicrosoftADPolicyResourceType, id)
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return policy, err
@@ -333,21 +352,67 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (MicrosoftAdPoli
 	return policy, err
 }
 
-func (apiClient *OneFuseAPIClient) UpdateMicrosoftAdPolicy(id int, updatedPolicy MicrosoftAdPolicy) (MicrosoftAdPolicy, error) {
-	policy := MicrosoftAdPolicy{}
-	err := errors.New("Not implemented yet")
+func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy *MicrosoftADPolicy) (MicrosoftADPolicy, error) {
+	policy := MicrosoftADPolicy{}
+	config := apiClient.config
+	url := itemURL(config, MicrosoftADPolicyResourceType, id)
+
+	if updatedPolicy.Name == "" || updatedPolicy.WorkspaceURL == "" {
+		return policy, errors.New("Microsoft AD Policy Updates Require a Name and WorkspaceURL")
+	}
+
+
+	jsonBytes, err := json.Marshal(updatedPolicy)
+	if err != nil {
+		return policy, err
+	}
+
+	requestBody := string(jsonBytes)
+	if err != nil {
+		err = errors.New("unable to marshal request body to JSON")
+		return policy, err
+	}
+
+	payload := strings.NewReader(requestBody)
+
+	req, err := http.NewRequest("PUT", url, payload)
+	if err != nil {
+		return policy, err
+	}
+
+	setHeaders(req, config)
+
+	client := getHttpClient(config)
+
+    res, err := client.Do(req)
+	if err != nil {
+		return policy, err
+	}
+
+	checkForErrors(res)
+
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return policy, err
+	}
+	res.Body.Close()
+
+    err = json.Unmarshal(body, &policy)
+    if err != nil {
+        return policy, err
+    }
 
 	return policy, err
 }
 
-func (apiClient *OneFuseAPIClient) DeleteMicrosoftAdPolicy(id int) error {
+func (apiClient *OneFuseAPIClient) DeleteMicrosoftADPolicy(id int) error {
 	config := apiClient.config
 
 	// Construct a URL we are going to DELETE to
 	// /api/v3/onefuse/microsoftADPolicy/<id>/
-	url := itemURL(config, MicrosoftAdPolicyResourceType, id)
+	url := itemURL(config, MicrosoftADPolicyResourceType, id)
 
-	// Create the DELETE request
+	// Make the DELETE request
 	req, _ := http.NewRequest("DELETE", url, nil)
 
 	setHeaders(req, config)
@@ -399,7 +464,7 @@ func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	if len(workspaces) == 0 {
 		panic("Unable to find default workspace.")
 	}
-	workspaceID = workspaces[0].ID
+	workspaceID = strconv.Itoa(workspaces[0].ID)
 	return
 }
 
@@ -411,11 +476,13 @@ func getHttpClient(config *Config) *http.Client {
 }
 
 func checkForErrors(res *http.Response) error {
-	// TODO: How to handle 40X errors?
 	if res.StatusCode >= 500 {
 		b, _ := ioutil.ReadAll(res.Body)
 		return errors.New(string(b))
-	}
+	} else if res.StatusCode >= 400 {
+		b, _ := ioutil.ReadAll(res.Body)
+		return errors.New(string(b))
+    }
 	return nil
 }
 
