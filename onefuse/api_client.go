@@ -37,7 +37,7 @@ type CustomName struct {
 }
 
 type LinkRef struct {
-	Href string `json:"href,omitempty"`
+	Href  string `json:"href,omitempty"`
 	Title string `json:"href,omitempty"`
 }
 
@@ -45,7 +45,7 @@ type Workspace struct {
 	Links *struct {
 		Self LinkRef `json:"self,omitempty"`
 	} `json:"_links,omitempty"`
-	ID int `json:"id,omitempty"`
+	ID   int    `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
@@ -57,12 +57,12 @@ type WorkspacesListResponse struct {
 
 type MicrosoftEndpoint struct {
 	Links *struct {
-		Self LinkRef `json:"self,omitempty"`
-		Workspace LinkRef `json:"workspace,omitempty"`
+		Self       LinkRef `json:"self,omitempty"`
+		Workspace  LinkRef `json:"workspace,omitempty"`
 		Credential LinkRef `json:"credential,omitempty"`
 	} `json:"_links,omitempty"`
 	ID               int    `json:"id,omitempty"`
-	Type			 string `json:"type,omitempty"`
+	Type             string `json:"type,omitempty"`
 	Name             string `json:"name,omitempty"`
 	Description      string `json:"string,omitempty"`
 	Host             string `json:"host,omitempty"`
@@ -73,18 +73,18 @@ type MicrosoftEndpoint struct {
 
 type MicrosoftADPolicy struct {
 	Links *struct {
-		Self LinkRef `json:self,omitempty"`
-		Workspace LinkRef `json:"workspace,omitempty"`
+		Self              LinkRef `json:self,omitempty"`
+		Workspace         LinkRef `json:"workspace,omitempty"`
 		MicrosoftEndpoint LinkRef `json:"microsoftEndpoint,omitempty"`
 	} `json:"_links,omitempty"`
-	Name                   string   `json:"name,omitempty"`
-	ID                     int      `json:"id,omitempty"`
-	Description            string   `json:"description,omitempty"`
-	MicrosoftEndpointID    int      `json:"microsoftEndpointId,omitempty"`
-	MicrosoftEndpoint      string   `json:"microsoftEndpoint,omitempty"`
-	ComputerNameLetterCase string   `json:"computerNameLetterCase,omitempty"`
-	WorkspaceURL           string   `json:"workspace,omitempty"`
-	OU                     string   `json:"ou,omitempty"`
+	Name                   string `json:"name,omitempty"`
+	ID                     int    `json:"id,omitempty"`
+	Description            string `json:"description,omitempty"`
+	MicrosoftEndpointID    int    `json:"microsoftEndpointId,omitempty"`
+	MicrosoftEndpoint      string `json:"microsoftEndpoint,omitempty"`
+	ComputerNameLetterCase string `json:"computerNameLetterCase,omitempty"`
+	WorkspaceURL           string `json:"workspace,omitempty"`
+	OU                     string `json:"ou,omitempty"`
 }
 
 func (c *Config) NewOneFuseApiClient() *OneFuseAPIClient {
@@ -361,7 +361,6 @@ func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy
 		return policy, errors.New("Microsoft AD Policy Updates Require a Name and WorkspaceURL")
 	}
 
-
 	jsonBytes, err := json.Marshal(updatedPolicy)
 	if err != nil {
 		return policy, err
@@ -384,7 +383,7 @@ func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy
 
 	client := getHttpClient(config)
 
-    res, err := client.Do(req)
+	res, err := client.Do(req)
 	if err != nil {
 		return policy, err
 	}
@@ -397,10 +396,10 @@ func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy
 	}
 	res.Body.Close()
 
-    err = json.Unmarshal(body, &policy)
-    if err != nil {
-        return policy, err
-    }
+	err = json.Unmarshal(body, &policy)
+	if err != nil {
+		return policy, err
+	}
 
 	return policy, err
 }
@@ -482,7 +481,7 @@ func checkForErrors(res *http.Response) error {
 	} else if res.StatusCode >= 400 {
 		b, _ := ioutil.ReadAll(res.Body)
 		return errors.New(string(b))
-    }
+	}
 	return nil
 }
 

@@ -9,7 +9,7 @@ package onefuse
 import (
 	"fmt"
 	"log"
-    "strings"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
@@ -69,8 +69,8 @@ func bindMicrosoftADPolicyResource(d *schema.ResourceData, policy *MicrosoftADPo
 	if err := d.Set("workspace_url", policy.Links.Workspace.Href); err != nil {
 		return errors.WithMessage(err, "cannot set workspace")
 	}
-    microsoftEndpointURLSplit := strings.Split(policy.Links.MicrosoftEndpoint.Href, "/")
-    microsoftEndpointID := microsoftEndpointURLSplit[len(microsoftEndpointURLSplit)-1]
+	microsoftEndpointURLSplit := strings.Split(policy.Links.MicrosoftEndpoint.Href, "/")
+	microsoftEndpointID := microsoftEndpointURLSplit[len(microsoftEndpointURLSplit)-1]
 	if err := d.Set("microsoft_endpoint_id", microsoftEndpointID); err != nil {
 		return errors.WithMessage(err, "cannot set microsoft_endpoint")
 	}
@@ -89,7 +89,7 @@ func resourceMicrosoftADPolicyCreate(d *schema.ResourceData, m interface{}) erro
 		OU:                     d.Get("ou").(string),
 		MicrosoftEndpointID:    d.Get("microsoft_endpoint_id").(int),
 		ComputerNameLetterCase: d.Get("computer_name_letter_case").(string),
-		WorkspaceURL:			d.Get("workspace_url").(string),
+		WorkspaceURL:           d.Get("workspace_url").(string),
 	}
 	config := m.(Config)
 	policy, err := config.NewOneFuseApiClient().CreateMicrosoftADPolicy(&newPolicy)
@@ -109,42 +109,42 @@ func resourceMicrosoftADPolicyRead(d *schema.ResourceData, m interface{}) error 
 }
 
 func resourceMicrosoftADPolicyUpdate(d *schema.ResourceData, m interface{}) error {
-    // Determine if a change is needed
-	changed := (d.HasChange("name")                      ||
-                d.HasChange("description")               ||
-                d.HasChange("microsoft_endpoint_id")     ||
-                d.HasChange("computer_name_letter_case") ||
-                d.HasChange("workspace_url")             ||
-                d.HasChange("ou")                        )
-    if !changed {
-        return nil
-    }
+	// Determine if a change is needed
+	changed := (d.HasChange("name") ||
+		d.HasChange("description") ||
+		d.HasChange("microsoft_endpoint_id") ||
+		d.HasChange("computer_name_letter_case") ||
+		d.HasChange("workspace_url") ||
+		d.HasChange("ou"))
+	if !changed {
+		return nil
+	}
 
-    // Create the desired AD Policy object
-    id := d.Get("id").(int)
-    desiredPolicy := MicrosoftADPolicy{
-        Name:                   d.Get("name").(string),
-        Description:            d.Get("description").(string),
-        MicrosoftEndpointID:    d.Get("microsoft_endpoint_id").(int),
-        ComputerNameLetterCase: d.Get("computer_name_letter_case").(string),
-        WorkspaceURL:           d.Get("workspace_url").(string),
-        OU:                     d.Get("ou").(string),
-    }
+	// Create the desired AD Policy object
+	id := d.Get("id").(int)
+	desiredPolicy := MicrosoftADPolicy{
+		Name:                   d.Get("name").(string),
+		Description:            d.Get("description").(string),
+		MicrosoftEndpointID:    d.Get("microsoft_endpoint_id").(int),
+		ComputerNameLetterCase: d.Get("computer_name_letter_case").(string),
+		WorkspaceURL:           d.Get("workspace_url").(string),
+		OU:                     d.Get("ou").(string),
+	}
 
-    // Make the API call to update the policy
+	// Make the API call to update the policy
 	config := m.(Config)
 	updatedPolicy, err := config.NewOneFuseApiClient().UpdateMicrosoftADPolicy(id, &desiredPolicy)
 	if err != nil {
 		return err
 	}
 
-    // Update Terraform's state
-    d.Set("name", updatedPolicy.Name)
-    d.Set("description", updatedPolicy.Description)
-    d.Set("microsoft_endpoint", updatedPolicy.MicrosoftEndpointID)
-    d.Set("computer_name_letter_case", updatedPolicy.ComputerNameLetterCase)
-    d.Set("workspace_url", updatedPolicy.WorkspaceURL)
-    d.Set("ou", updatedPolicy.OU)
+	// Update Terraform's state
+	d.Set("name", updatedPolicy.Name)
+	d.Set("description", updatedPolicy.Description)
+	d.Set("microsoft_endpoint", updatedPolicy.MicrosoftEndpointID)
+	d.Set("computer_name_letter_case", updatedPolicy.ComputerNameLetterCase)
+	d.Set("workspace_url", updatedPolicy.WorkspaceURL)
+	d.Set("ou", updatedPolicy.OU)
 
 	return nil
 }
