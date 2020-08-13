@@ -120,5 +120,7 @@ func resourceMicrosoftAdPolicyUpdate(d *schema.ResourceData, m interface{}) erro
 }
 
 func resourceMicrosoftAdPolicyDelete(d *schema.ResourceData, m interface{}) error {
-	return errors.New("Not implemented yet")
+	config := m.(Config)
+	id := d.Get("microsoft_ad_policy_id").(int)
+	return config.NewOneFuseApiClient().DeleteMicrosoftAdPolicy(id)
 }
