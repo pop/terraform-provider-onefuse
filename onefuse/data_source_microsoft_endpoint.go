@@ -7,10 +7,10 @@
 package onefuse
 
 import (
-	// "log" // TODO: Un-comment when data source implemented
+	"fmt"
+	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
-	"github.com/pkg/errors"
 )
 
 func dataSourceMicrosoftEndpoint() *schema.Resource {
@@ -30,5 +30,21 @@ func dataSourceMicrosoftEndpoint() *schema.Resource {
 }
 
 func dataSourceMicrosoftEndpointRead(d *schema.ResourceData, meta interface{}) error {
-	return errors.New("Not implemented yet")
+	log.Printf("in dataSourceMicrosoftEndpointRead")
+	config := meta.(Config)
+	apiClient := config.NewOneFuseApiClient()
+	log.Printf("[!!] apiClient: %+v", apiClient)
+
+	endpoint, err := apiClient.GetMicrosoftEndpointByName(d.Get("name").(string))
+
+	log.Printf("[!!] endpoint : %+v", endpoint)
+
+	if err != nil {
+		return fmt.Errorf("Error loading Microsoft Endpoint: %s", err)
+	}
+
+	d.SetId(fmt.Sprintf("%v", endpoint.ID))
+	d.Set("name", endpoint.Name)
+
+	return nil
 }

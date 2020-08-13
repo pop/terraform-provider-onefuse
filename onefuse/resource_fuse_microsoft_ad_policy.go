@@ -10,9 +10,10 @@ import (
 	// "log" // TODO: Un-comment when data source implemented
 
 	"fmt"
+	"log"
+
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/pkg/errors"
-	"log"
 )
 
 func resourceMicrosoftAdPolicy() *schema.Resource {
@@ -60,9 +61,6 @@ func resourceMicrosoftAdPolicy() *schema.Resource {
 func bindMicrosoftADPolicyResource(d *schema.ResourceData, policy *MicrosoftAdPolicy) error {
 	d.SetId(fmt.Sprintf("%v", policy.ID))
 
-	if err := d.Set("policy_id", policy.Id); err != nil {
-		return errors.WithMessage(err, "cannot set policy_id")
-	}
 	if err := d.Set("name", policy.Name); err != nil {
 		return errors.WithMessage(err, "cannot set name")
 	}
@@ -86,22 +84,20 @@ func resourceMicrosoftAdPolicyCreate(d *schema.ResourceData, m interface{}) erro
 
 	// TODO: parse out the id and/or name from workspaceUrl
 	//  and will have to update when OneFuse supports multiple workspaces.
-	workspaceUrl := d.Get("workspace").(string)
+	workspaceURL := d.Get("workspace").(string)
 	workspace := Workspace{
-		Name: workspaceUrl,
-		ID: workspaceUrl,
+		Name: workspaceURL,
+		ID:   workspaceURL,
 	}
-	workspaces := make([]Workspace, 1).append(workspace)
 
 	newPolicy := MicrosoftAdPolicy{
-		Name: d.Get("name").(string),
-		Description: d.Get("description").(string),
-		OU: d.Get("ou").(string),
-		MicrosoftEndpoint: d.Get("microsoftEndpointId").(string),
+		Name:                   d.Get("name").(string),
+		Description:            d.Get("description").(string),
+		OU:                     d.Get("ou").(string),
+		MicrosoftEndpoint:      d.Get("microsoftEndpointId").(string),
 		ComputerNameLetterCase: d.Get("computerNameLetterCase").(string),
-		Embedded: workspaces,
 	}
-
+	newPolicy.Links.Workspace = workspace
 	config := m.(Config)
 	policy, err := config.NewOneFuseApiClient().CreateMicrosoftAdPolicy(newPolicy)
 	if err != nil {
@@ -112,7 +108,11 @@ func resourceMicrosoftAdPolicyCreate(d *schema.ResourceData, m interface{}) erro
 }
 
 func resourceMicrosoftAdPolicyRead(d *schema.ResourceData, m interface{}) error {
-	return errors.New("Not implemented yet")
+	config := m.(Config)
+	id := d.Get("microsoft_ad_policy_id").(int)
+	policy, err := config.NewOneFuseApiClient().GetMicrosoftAdPolicy(id)
+	bindMicrosoftADPolicyResource(d, &policy)
+	return err
 }
 
 func resourceMicrosoftAdPolicyUpdate(d *schema.ResourceData, m interface{}) error {

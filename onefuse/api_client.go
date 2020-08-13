@@ -22,7 +22,8 @@ const ApiVersion = "/api/v3/"
 const ApiNamespace = "onefuse"
 const NamingResourceType = "customNames"
 const WorkspaceResourceType = "workspaces"
-const MicrosoftAdPolicyResourceType = "microsoftADPolicies"
+const MicrosoftAdPolicyResourceType = "microsoftActiveDirectoryPolicies"
+const ModuleEndpointResourceType = "endpoints"
 
 type OneFuseAPIClient struct {
 	config *Config
@@ -30,7 +31,7 @@ type OneFuseAPIClient struct {
 
 type Workspace struct {
 	Name string `json:"name"`
-	ID 	 string `json:"id"`
+	ID   string `json:"id"`
 }
 
 type CustomName struct {
@@ -62,7 +63,7 @@ type MicrosoftEndpoint struct {
 type MicrosoftAdPolicy struct {
 	Links struct {
 		// TODO: just model what we get; use the workspace URL.
-		Workspace `json:"workspace"`
+		Workspace         `json:"workspace"`
 		MicrosoftEndpoint struct {
 			// TODO Update
 			Name string
@@ -207,6 +208,38 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (MicrosoftEndpoi
 	return endpoint, err
 }
 
+func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (MicrosoftEndpoint, error) {
+	endpoint := MicrosoftEndpoint{}
+	config := apiClient.config
+	url := collectionURL(config, ModuleEndpointResourceType)
+	url += fmt.Sprintf("?filter=name:%s;type:microsoft", name)
+
+	fmt.Print(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return endpoint, err
+	}
+
+	setHeaders(req, config)
+
+	log.Println("REQUEST:")
+	log.Println(req)
+	client := getHttpClient(config)
+	res, _ := client.Do(req)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return endpoint, err
+	}
+	log.Println("HTTP GET RESULTS:")
+	log.Println(string(body))
+
+	json.Unmarshal(body, &endpoint)
+	log.Println("Endpoint:")
+	log.Println(endpoint)
+	res.Body.Close()
+	return endpoint, err
+}
+
 func (apiClient *OneFuseAPIClient) UpdateMicrosoftEndpoint(id int, updatedEndpoint MicrosoftEndpoint) (MicrosoftEndpoint, error) {
 	endpoint := MicrosoftEndpoint{}
 	err := errors.New("Not implemented yet")
@@ -223,10 +256,10 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAd
 
 	// Construct a URL we are going to POST to
 	// /api/v3/onefuse/microsoftADPolicies/
-	url := itemURL(config, MicrosoftAdPolicyResourceType, id)
+	url := collectionURL(config, MicrosoftAdPolicyResourceType)
 
 	var jsonBytes []byte
-	jsonBytes, err = json.Marshal(newPolicy)
+	jsonBytes, err := json.Marshal(newPolicy)
 	requestBody := string(jsonBytes)
 	if err != nil {
 		err = errors.New("unable to marshal request body to JSON")
@@ -275,7 +308,28 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftAdPolicy(newPolicy MicrosoftAd
 
 func (apiClient *OneFuseAPIClient) GetMicrosoftAdPolicy(id int) (MicrosoftAdPolicy, error) {
 	policy := MicrosoftAdPolicy{}
-	err := errors.New("Not implemented yet")
+	config := apiClient.config
+	url := itemURL(config, MicrosoftAdPolicyResourceType, id)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return policy, err
+	}
+
+	setHeaders(req, config)
+
+	log.Println("REQUEST:")
+	log.Println(req)
+	client := getHttpClient(config)
+	res, _ := client.Do(req)
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return policy, err
+	}
+	log.Println("HTTP GET RESULTS:")
+	log.Println(string(body))
+
+	json.Unmarshal(body, &policy)
+	res.Body.Close()
 	return policy, err
 }
 
@@ -345,7 +399,7 @@ func findDefaultWorkspaceID(config *Config) (workspaceID string, err error) {
 	if len(workspaces) == 0 {
 		panic("Unable to find default workspace.")
 	}
-	workspaceID = strconv.Itoa(workspaces[0].ID)
+	workspaceID = workspaces[0].ID
 	return
 }
 
