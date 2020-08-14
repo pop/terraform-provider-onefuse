@@ -2,19 +2,22 @@
 
 variable "onefuse_address" {
   type = string
+  default = "localhost"
 }
 
 variable "onefuse_port" {
   type = string
-  default = "443"
+  default = "8000"
 }
 
 variable "onefuse_user" {
   type = string
+  default = "admin"
 }
 
 variable "onefuse_password" {
   type = string
+  default = "admin"
 }
 
 variable "onefuse_verify_ssl" {
@@ -26,7 +29,7 @@ variable "onefuse_verify_ssl" {
 
 variable "onefuse_microsoft_endpoint" {
   type = string
-  default = "My Microsoft Endpoint"
+  default = "microsoftEndpointSovlabs"
 }
 
 
@@ -34,7 +37,7 @@ variable "onefuse_microsoft_endpoint" {
 
 variable "ad_policy_name" {
   type = string
-  default = "Some Naming Policy"
+  default = "Some_Naming_Policy_04"
 }
 
 variable "ad_policy_description" {

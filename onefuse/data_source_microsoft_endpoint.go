@@ -9,6 +9,7 @@ package onefuse
 import (
 	"fmt"
 	"log"
+	"strconv"
 
 	"github.com/hashicorp/terraform/helper/schema"
 )
@@ -43,7 +44,7 @@ func dataSourceMicrosoftEndpointRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Error loading Microsoft Endpoint: %s", err)
 	}
 
-	d.SetId(fmt.Sprintf("%v", endpoint.ID))
+	d.SetId(strconv.Itoa(endpoint.ID))
 	d.Set("name", endpoint.Name)
 
 	return nil

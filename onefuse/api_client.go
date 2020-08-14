@@ -38,7 +38,7 @@ type CustomName struct {
 
 type LinkRef struct {
 	Href  string `json:"href,omitempty"`
-	Title string `json:"href,omitempty"`
+	Title string `json:"title,omitempty"`
 }
 
 type Workspace struct {
@@ -52,6 +52,12 @@ type Workspace struct {
 type WorkspacesListResponse struct {
 	Embedded struct {
 		Workspaces []Workspace `json:"workspaces"`
+	} `json:"_embedded"`
+}
+
+type EndpointsListResponse struct {
+	Embedded struct {
+        Endpoints []MicrosoftEndpoint `json:"endpoints"` // TODO: Generalize to Endpoints
 	} `json:"_embedded"`
 }
 
@@ -73,7 +79,7 @@ type MicrosoftEndpoint struct {
 
 type MicrosoftADPolicy struct {
 	Links *struct {
-		Self              LinkRef `json:self,omitempty"`
+		Self              LinkRef `json:"self,omitempty"`
 		Workspace         LinkRef `json:"workspace,omitempty"`
 		MicrosoftEndpoint LinkRef `json:"microsoftEndpoint,omitempty"`
 	} `json:"_links,omitempty"`
@@ -225,6 +231,8 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (MicrosoftEndpoi
 
 func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (MicrosoftEndpoint, error) {
 	endpoint := MicrosoftEndpoint{}
+    endpoints := EndpointsListResponse{}
+
 	config := apiClient.config
 	url := collectionURL(config, ModuleEndpointResourceType)
 	url += fmt.Sprintf("?filter=name:%s;type:microsoft", name)
@@ -236,20 +244,22 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (Micr
 
 	setHeaders(req, config)
 
-	log.Println("REQUEST:")
-	log.Println(req)
+	log.Println("[!!] REQUEST:", req)
 	client := getHttpClient(config)
-	res, _ := client.Do(req)
+	res, err := client.Do(req)
+	if err != nil {
+		return endpoint, err
+	}
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		return endpoint, err
 	}
-	log.Println("HTTP GET RESULTS:")
-	log.Println(string(body))
+	log.Println("[!!] HTTP response body :", string(body))
 
-	json.Unmarshal(body, &endpoint)
-	log.Println("Endpoint:")
-	log.Println(endpoint)
+	json.Unmarshal(body, &endpoints)
+    endpoint = endpoints.Embedded.Endpoints[0]
+	log.Println("[!!] Endpoints:", endpoints)
+	log.Println("[!!] Endpoint:", endpoint)
 	res.Body.Close()
 	return endpoint, err
 }
@@ -315,6 +325,8 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftADPolicy(newPolicy *MicrosoftA
 	if err != nil {
 		return policy, err
 	}
+
+	log.Printf("[!!] Create Microsoft AD Response Body: ", string(body))
 
 	err = json.Unmarshal(body, &policy)
 	if err != nil {

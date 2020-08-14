@@ -13,6 +13,12 @@ import (
 func Provider() *schema.Provider {
 	return &schema.Provider{
 		Schema: map[string]*schema.Schema{
+			"scheme": {
+				Type:        schema.TypeString,
+				Required:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ONEFUSE_SCHEME", nil),
+				Description: "OneFuse REST endpoint service http/https scheme",
+			},
 			"address": {
 				Type:        schema.TypeString,
 				Required:    true,
@@ -67,7 +73,7 @@ type Config struct {
 
 func configureProvider(d *schema.ResourceData) (interface{}, error) {
 	return Config{
-		scheme:    "https",
+		scheme:    d.Get("scheme").(string),
 		address:   d.Get("address").(string),
 		port:      d.Get("port").(string),
 		user:      d.Get("user").(string),

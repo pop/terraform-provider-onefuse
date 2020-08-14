@@ -38,7 +38,6 @@ provider "onefuse" {
   port        = "8000"
   user        = "admin"
   password    = "my-password"
-  scheme      = "http"
   verify_ssl  = false
 }
 
@@ -56,6 +55,11 @@ resource "onefuse_naming" "my-onefuse-name" {
   }
 }
 ```
+
+## Roadmap
+
+- [ ] Naming (OneFuse 1.0, Provider 1.0.0)
+- [ ] Microsoft AD Policy (OneFuse 1.1, Provider 1.1)
 
 ## Contributing
 
