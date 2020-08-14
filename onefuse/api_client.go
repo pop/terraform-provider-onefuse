@@ -57,7 +57,7 @@ type WorkspacesListResponse struct {
 
 type EndpointsListResponse struct {
 	Embedded struct {
-        Endpoints []MicrosoftEndpoint `json:"endpoints"` // TODO: Generalize to Endpoints
+		Endpoints []MicrosoftEndpoint `json:"endpoints"` // TODO: Generalize to Endpoints
 	} `json:"_embedded"`
 }
 
@@ -231,7 +231,7 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpoint(id int) (MicrosoftEndpoi
 
 func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (MicrosoftEndpoint, error) {
 	endpoint := MicrosoftEndpoint{}
-    endpoints := EndpointsListResponse{}
+	endpoints := EndpointsListResponse{}
 
 	config := apiClient.config
 	url := collectionURL(config, ModuleEndpointResourceType)
@@ -257,7 +257,7 @@ func (apiClient *OneFuseAPIClient) GetMicrosoftEndpointByName(name string) (Micr
 	log.Println("[!!] HTTP response body :", string(body))
 
 	json.Unmarshal(body, &endpoints)
-    endpoint = endpoints.Embedded.Endpoints[0]
+	endpoint = endpoints.Embedded.Endpoints[0]
 	log.Println("[!!] Endpoints:", endpoints)
 	log.Println("[!!] Endpoint:", endpoint)
 	res.Body.Close()
@@ -279,8 +279,17 @@ func (apiClient *OneFuseAPIClient) CreateMicrosoftADPolicy(newPolicy *MicrosoftA
 	policy := MicrosoftADPolicy{}
 	config := apiClient.config
 
-	if newPolicy.Name == "" || newPolicy.WorkspaceURL == "" || newPolicy.MicrosoftEndpointID == 0 {
-		return policy, errors.New("Microsoft AD Policy Updates Require a Name and, MicrosoftEndpointID, WorkspaceURL")
+	if newPolicy.Name == "" || newPolicy.MicrosoftEndpointID == 0 {
+		return policy, errors.New("Microsoft AD Policy Updates Require a Name and MicrosoftEndpointID")
+	}
+
+	if newPolicy.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return policy, err
+		}
+		newPolicy.WorkspaceURL = fmt.Sprintf("%s%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID)
+		log.Printf("Default workspace URL set as '%s'", newPolicy.WorkspaceURL)
 	}
 
 	// Construct a URL we are going to POST to
@@ -369,8 +378,17 @@ func (apiClient *OneFuseAPIClient) UpdateMicrosoftADPolicy(id int, updatedPolicy
 	config := apiClient.config
 	url := itemURL(config, MicrosoftADPolicyResourceType, id)
 
-	if updatedPolicy.Name == "" || updatedPolicy.WorkspaceURL == "" {
-		return policy, errors.New("Microsoft AD Policy Updates Require a Name and WorkspaceURL")
+	if updatedPolicy.Name == "" {
+		return policy, errors.New("Microsoft AD Policy Updates Require a Name")
+	}
+
+	if updatedPolicy.WorkspaceURL == "" {
+		workspaceID, err := findDefaultWorkspaceID(config)
+		if err != nil {
+			return policy, err
+		}
+		updatedPolicy.WorkspaceURL = fmt.Sprintf("%s%s/workspaces/%s/", ApiVersion, ApiNamespace, workspaceID)
+		log.Printf("Default workspace URL set as '%s'", updatedPolicy.WorkspaceURL)
 	}
 
 	jsonBytes, err := json.Marshal(updatedPolicy)

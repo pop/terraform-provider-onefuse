@@ -55,3 +55,7 @@ variable "ad_ou" {
   default = "ou=Accounting,dc=onefuse,dc=com"
 }
 
+variable "ad_workspace_url" {
+  type = string
+  default = ""
+}

@@ -17,5 +17,5 @@ resource "onefuse_microsoft_ad_policy" "my_ad_policy" {
     microsoft_endpoint_id = data.onefuse_microsoft_endpoint.my_microsoft_endpoint.id
     computer_name_letter_case = var.ad_computer_name_letter_case
     ou = var.ad_ou
-    workspace_url = "/api/v3/onefuse/workspaces/1/"
+    workspace_url = var.ad_workspace_url
 }
