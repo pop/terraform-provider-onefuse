@@ -45,6 +45,7 @@ func resourceMicrosoftADPolicy() *schema.Resource {
 			},
 			"workspace_url": {
 				Type:     schema.TypeString,
+				Computed: true,
 				Optional: true,
 			},
 		},
@@ -52,44 +53,47 @@ func resourceMicrosoftADPolicy() *schema.Resource {
 }
 
 func bindMicrosoftADPolicyResource(d *schema.ResourceData, policy *MicrosoftADPolicy) error {
-	d.SetId(strconv.Itoa(policy.ID))
+	log.Println("onefuse.bindMicrosoftADPolicyResource")
 
 	if err := d.Set("name", policy.Name); err != nil {
-		return errors.WithMessage(err, "cannot set name")
-	}
-	if err := d.Set("description", policy.Description); err != nil {
-		return errors.WithMessage(err, "cannot set description")
-	}
-	if err := d.Set("workspace_url", policy.Links.Workspace.Href); err != nil {
-		return errors.WithMessage(err, "cannot set workspace")
-	}
-	if err := d.Set("computer_name_letter_case", policy.ComputerNameLetterCase); err != nil {
-		return errors.WithMessage(err, "cannot set computer_name_letter_case")
-	}
-	if err := d.Set("ou", policy.OU); err != nil {
-		return errors.WithMessage(err, "cannot set OU")
+		return errors.WithMessage(err, "Cannot set name: "+policy.Name)
 	}
 
-	log.Println("[!!] Policy Links: ", policy.Links)
-	log.Println("[!!] Policy Links MicrosoftEndpoint: ", policy.Links.MicrosoftEndpoint)
+	if err := d.Set("description", policy.Description); err != nil {
+		return errors.WithMessage(err, "Cannot set description: "+policy.Description)
+	}
+
+	log.Printf("[!!] Policy workspace URL: %#v\n", policy.Links.Workspace.Href)
+	if err := d.Set("workspace_url", policy.Links.Workspace.Href); err != nil {
+		return errors.WithMessage(err, "Cannot set workspace: "+policy.Links.Workspace.Href)
+	}
+	log.Printf("[!!] Policy as set on URL: %#v\n", d.Get("workspace_url"))
+
+	if err := d.Set("computer_name_letter_case", policy.ComputerNameLetterCase); err != nil {
+		return errors.WithMessage(err, "Cannot set computer_name_letter_case: "+policy.ComputerNameLetterCase)
+	}
+
+	if err := d.Set("ou", policy.OU); err != nil {
+		return errors.WithMessage(err, "Cannot set OU: "+policy.OU)
+	}
+
 	microsoftEndpointURLSplit := strings.Split(policy.Links.MicrosoftEndpoint.Href, "/")
-	log.Println("[!!] splitURL: ", microsoftEndpointURLSplit)
 	microsoftEndpointID := microsoftEndpointURLSplit[len(microsoftEndpointURLSplit)-2]
 	microsoftEndpointIDInt, err := strconv.Atoi(microsoftEndpointID)
 	if err != nil {
-		return errors.WithMessage(err, "Failed to convert string to int...")
+		return errors.WithMessage(err, "Expected to convert "+microsoftEndpointID+" to int value.")
 	}
-	log.Println("[!!] Endpoint ID: ", microsoftEndpointIDInt)
 	if err := d.Set("microsoft_endpoint_id", microsoftEndpointIDInt); err != nil {
-		return errors.WithMessage(err, "cannot set microsoft_endpoint_id")
+		return errors.WithMessage(err, "Cannot set microsoft_endpoint_id")
 	}
-	// TODO: set OU and letter_case, too.
 
 	return nil
 }
 
 func resourceMicrosoftADPolicyCreate(d *schema.ResourceData, m interface{}) error {
-	log.Println("[!!] calling resourceMicrosoftADPolicyCreate")
+	log.Println("onefuse.resourceMicrosoftADPolicyCreate")
+
+	config := m.(Config)
 
 	newPolicy := MicrosoftADPolicy{
 		Name:                   d.Get("name").(string),
@@ -99,29 +103,41 @@ func resourceMicrosoftADPolicyCreate(d *schema.ResourceData, m interface{}) erro
 		ComputerNameLetterCase: d.Get("computer_name_letter_case").(string),
 		WorkspaceURL:           d.Get("workspace_url").(string),
 	}
-	log.Println("[!!] newPolicy: ", newPolicy)
 
-	config := m.(Config)
 	policy, err := config.NewOneFuseApiClient().CreateMicrosoftADPolicy(&newPolicy)
 	if err != nil {
 		return err
 	}
-	log.Println("[!!] receivedPolicy: ", policy)
+	d.SetId(strconv.Itoa(policy.ID))
 
-	err = bindMicrosoftADPolicyResource(d, &policy)
-	return err
+	return resourceMicrosoftADPolicyRead(d, m)
 }
 
 func resourceMicrosoftADPolicyRead(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceMicrosoftADPolicyRead")
+
 	config := m.(Config)
+
 	id := d.Id()
-	int_id, _ := strconv.Atoi(id)
+	int_id, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
 	policy, err := config.NewOneFuseApiClient().GetMicrosoftADPolicy(int_id)
-	bindMicrosoftADPolicyResource(d, &policy)
-	return err
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[!!] Read Policy: %#v\n", policy)
+	log.Printf("[!!] Read Policy Worksapce: %#v\n", policy.Links.Workspace)
+
+	return bindMicrosoftADPolicyResource(d, policy)
 }
 
 func resourceMicrosoftADPolicyUpdate(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceMicrosoftADPolicyUpdate")
+
 	// Determine if a change is needed
 	changed := (d.HasChange("name") ||
 		d.HasChange("description") ||
@@ -129,11 +145,13 @@ func resourceMicrosoftADPolicyUpdate(d *schema.ResourceData, m interface{}) erro
 		d.HasChange("computer_name_letter_case") ||
 		d.HasChange("workspace_url") ||
 		d.HasChange("ou"))
+
 	if !changed {
 		return nil
 	}
 
-	log.Printf("[!!] stuff has changed")
+	// Make the API call to update the policy
+	config := m.(Config)
 
 	// Create the desired AD Policy object
 	id := d.Id()
@@ -146,32 +164,28 @@ func resourceMicrosoftADPolicyUpdate(d *schema.ResourceData, m interface{}) erro
 		OU:                     d.Get("ou").(string),
 	}
 
-	log.Println("[!!]", id, desiredPolicy)
-
-	// Make the API call to update the policy
-	config := m.(Config)
-	int_id, _ := strconv.Atoi(id)
-	updatedPolicy, err := config.NewOneFuseApiClient().UpdateMicrosoftADPolicy(int_id, &desiredPolicy)
+	int_id, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+	_, err = config.NewOneFuseApiClient().UpdateMicrosoftADPolicy(int_id, &desiredPolicy)
 	if err != nil {
 		return err
 	}
 
-	log.Println("[!!]", updatedPolicy, err)
-
-	// Update Terraform's state
-	d.Set("name", updatedPolicy.Name)
-	d.Set("description", updatedPolicy.Description)
-	d.Set("microsoft_endpoint_id", strconv.Itoa(updatedPolicy.MicrosoftEndpointID))
-	d.Set("computer_name_letter_case", updatedPolicy.ComputerNameLetterCase)
-	d.Set("workspace_url", updatedPolicy.WorkspaceURL)
-	d.Set("ou", updatedPolicy.OU)
-
-	return nil
+	return resourceMicrosoftADPolicyRead(d, m)
 }
 
 func resourceMicrosoftADPolicyDelete(d *schema.ResourceData, m interface{}) error {
+	log.Println("onefuse.resourceMicrosoftADPolicyDelete")
+
 	config := m.(Config)
+
 	id := d.Id()
-	int_id, _ := strconv.Atoi(id)
+	int_id, err := strconv.Atoi(id)
+	if err != nil {
+		return err
+	}
+
 	return config.NewOneFuseApiClient().DeleteMicrosoftADPolicy(int_id)
 }

@@ -1,5 +1,5 @@
 provider "onefuse" {
-  scheme      = "http"
+  scheme      = var.onefuse_scheme
   address     = var.onefuse_address
   port        = var.onefuse_port
   user        = var.onefuse_user

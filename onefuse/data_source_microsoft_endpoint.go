@@ -31,14 +31,12 @@ func dataSourceMicrosoftEndpoint() *schema.Resource {
 }
 
 func dataSourceMicrosoftEndpointRead(d *schema.ResourceData, meta interface{}) error {
-	log.Printf("in dataSourceMicrosoftEndpointRead\n")
+	log.Println("onefuse.dataSourceMicrosoftEndpointRead")
+
 	config := meta.(Config)
 	apiClient := config.NewOneFuseApiClient()
-	log.Printf("[!!] apiClient: %+v\n", apiClient)
 
 	endpoint, err := apiClient.GetMicrosoftEndpointByName(d.Get("name").(string))
-
-	log.Printf("[!!] endpoint : %+v\n", endpoint)
 
 	if err != nil {
 		return fmt.Errorf("Error loading Microsoft Endpoint: %s", err)

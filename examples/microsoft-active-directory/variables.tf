@@ -1,5 +1,10 @@
 // Provider setup
 
+variable "onefuse_scheme" {
+  type = string
+  default = "https"
+}
+
 variable "onefuse_address" {
   type = string
   default = "localhost"
@@ -7,7 +12,7 @@ variable "onefuse_address" {
 
 variable "onefuse_port" {
   type = string
-  default = "8000"
+  default = "443"
 }
 
 variable "onefuse_user" {
@@ -29,15 +34,14 @@ variable "onefuse_verify_ssl" {
 
 variable "onefuse_microsoft_endpoint" {
   type = string
-  default = "microsoftEndpointSovlabs"
+  default = "myMicrosoftEndpoint"
 }
-
 
 // Microsoft AD Policy
 
 variable "ad_policy_name" {
   type = string
-  default = "Some_Naming_Policy_04"
+  default = "myADPolicy"
 }
 
 variable "ad_policy_description" {

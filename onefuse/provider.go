@@ -15,9 +15,9 @@ func Provider() *schema.Provider {
 		Schema: map[string]*schema.Schema{
 			"scheme": {
 				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("ONEFUSE_SCHEME", nil),
-				Description: "OneFuse REST endpoint service http/https scheme",
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("ONEFUSE_SCHEME", "https"),
+				Description: "OneFuse REST endpoint service http(s) scheme",
 			},
 			"address": {
 				Type:        schema.TypeString,
@@ -72,18 +72,18 @@ type Config struct {
 }
 
 func configureProvider(d *schema.ResourceData) (interface{}, error) {
-	return Config{
-		scheme:    d.Get("scheme").(string),
-		address:   d.Get("address").(string),
-		port:      d.Get("port").(string),
-		user:      d.Get("user").(string),
-		password:  d.Get("password").(string),
-		verifySSL: d.Get("verify_ssl").(bool),
-	}, nil
+	return NewConfig(
+		d.Get("scheme").(string),
+		d.Get("address").(string),
+		d.Get("port").(string),
+		d.Get("user").(string),
+		d.Get("password").(string),
+		d.Get("verify_ssl").(bool),
+	), nil
 }
 
-func NewConfig(scheme string, address string, port string, user string, password string, verifySSL bool) *Config {
-	return &Config{
+func NewConfig(scheme string, address string, port string, user string, password string, verifySSL bool) Config {
+	return Config{
 		scheme:    scheme,
 		address:   address,
 		port:      port,
